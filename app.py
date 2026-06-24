@@ -13,7 +13,7 @@ st.set_page_config(
 )
 
 # ── Constants ─────────────────────────────────────────────────────────────────
-CORPUS_PATH     = "/content/drive/MyDrive/zyro-hr-corpus/"
+CORPUS_PATH     = "pdfs"
 EMBEDDING_MODEL = "sentence-transformers/all-mpnet-base-v2"
 LLM_PROVIDER    = "groq"
 LLM_MODEL       = "llama-3.3-70b-versatile"
