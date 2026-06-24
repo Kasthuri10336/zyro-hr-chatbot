@@ -48,8 +48,6 @@ def build_pipeline():
     from langchain_text_splitters import RecursiveCharacterTextSplitter
     from langchain_huggingface import HuggingFaceEmbeddings
     from langchain_community.vectorstores import FAISS
-    from langchain.retrievers.ensemble import EnsembleRetriever
-    from langchain_community.retrievers import BM25Retriever
     from langchain_core.prompts import ChatPromptTemplate
     from langchain_core.output_parsers import StrOutputParser
 
@@ -83,13 +81,7 @@ def build_pipeline():
         search_kwargs={"k": RETRIEVER_K, "fetch_k": MMR_FETCH_K,
                        "lambda_mult": MMR_LAMBDA},
     )
-    bm25_retriever   = BM25Retriever.from_documents(chunks)
-    bm25_retriever.k = RETRIEVER_K
-    hybrid_retriever = EnsembleRetriever(
-        retrievers=[semantic_retriever, bm25_retriever],
-        weights=[0.7, 0.3],
-    )
-
+    retriever = semantic_retriever
     # LLM
     if LLM_PROVIDER == "groq":
         from langchain_groq import ChatGroq
@@ -128,7 +120,7 @@ Determine if the question is related to HR policies or employee matters.
 Reply with exactly one word — YES if HR-related, NO if not.
 Question: {question}""")
 
-    return hybrid_retriever, llm, rag_prompt, oos_prompt
+    return retriever, llm, rag_prompt, oos_prompt
 
 
 def format_docs(docs):
@@ -177,7 +169,9 @@ def ask(question, retriever, llm, rag_prompt, oos_prompt):
 # ── API key setup ─────────────────────────────────────────────────────────────
 def load_api_keys():
     try:
-        from kaggle_secrets import UserSecretsClient
+        def load_api_keys():
+            if LLM_PROVIDER == "groq":
+                os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
         s = UserSecretsClient()
         if LLM_PROVIDER == "groq":
             os.environ["GROQ_API_KEY"] = s.get_secret("GROQ_API_KEY")
